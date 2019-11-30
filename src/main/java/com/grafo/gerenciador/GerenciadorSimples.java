@@ -1,8 +1,6 @@
 package com.grafo.gerenciador;
 
-import com.grafo.carregarDados.GerarMatrizNxN;
 import com.grafo.carregarDados.LerEntradas;
-import com.grafo.entregas.calculoIA.EntregasIA;
 import com.grafo.entregas.calculoProfundidade.Entregas;
 import com.grafo.entregas.calculoProfundidade.Rota;
 import com.grafo.models.Entradas;
@@ -50,10 +48,10 @@ public class GerenciadorSimples {
                     case 2:
                         calcularRota();
                         break;
-                    case 6:
+                    case 3:
                         mostrarRota();
                         break;
-                    case 7:
+                    case 4:
                         limparTela();
                         break;
                     case 0:
@@ -116,13 +114,17 @@ public class GerenciadorSimples {
 
     private void mostrarRota() {
         int cont = 1;
+        int contMelhorRota = 1;
         int recompensa = 0;
-        System.out.println("\n=================== =================== #Entregas do dia# =================== ===================");
+        int distanciaTotal = 0;
+        List<Rota> calculaMR;
+
+        System.out.println("\n=================== =================== ========== #Entregas do dia# ========== =================== ===================");
         for (RotasEntrega re : rotas) {
             Rota r = re.getRotaMenor();
 
             System.out
-                    .print("\n\n=================== =================== A " + cont + "º rota a ser realizada é de 'A' até '" + r.getDestino() + "' =================== ===================");
+                    .print("\n\n=================== =================== A " + cont + "º possível rota a ser realizada é de 'A' até '" + r.getDestino() + "' =================== ===================");
 
 
             boolean isTrue = false;
@@ -130,17 +132,87 @@ public class GerenciadorSimples {
                 isTrue = true;
             }
 
-            System.out.println("\n\nA rota Principal é: " + printRoute(r));
+            System.out.println("\n\nA possivel rota é: " + printRoute(r));
             System.out.println(
                     "Com a chegada estimada de " + r.getDistancia() + " unidades de tempo no destino " + "'"
                             + r.getDestino() + "'" + " e o valor para esta entrega será de " + (isTrue ?
                             r.getRecompensa() + " real" : r.getRecompensa() + " reais") + ".");
 
 
-            recompensa += r.getRecompensa();
+            distanciaTotal += r.getDistancia();
             cont++;
         }
+
+        calculaMR = calculaMelhorEntraga(distanciaTotal);
+        System.out.println("\n#############################################################################################################################");
+
+        for(Rota reS : calculaMR)
+        {
+            System.out
+                    .print("\n\n=================== =================== A " + contMelhorRota + "º rota a ser realizada é de 'A' até '" + reS.getDestino() + "' =================== ===================");
+
+
+            boolean isTrue = false;
+            if (reS.getRecompensa() == 1) {
+                isTrue = true;
+            }
+
+            System.out.println("\n\nA melhor rota é: " + printRoute(reS));
+            System.out.println(
+                    "Com a chegada estimada de " + reS.getDistancia() + " unidades de tempo no destino " + "'"
+                            + reS.getDestino() + "'" + " e o valor para esta entrega será de " + (isTrue ?
+                            reS.getRecompensa() + " real" : reS.getRecompensa() + " reais") + ".");
+
+            recompensa += reS.getRecompensa();
+            contMelhorRota ++;
+        }
+
         System.out.println("\n\nO lucro total do dia: " + recompensa + ".");
+    }
+
+
+    private List<Rota> calculaMelhorEntraga(int distanciaTotal)
+    {
+        int idaEvolta = 0;
+        int somaIdaEVolta = 0;
+
+        List<Rota> calculaMelhorEntrega = new ArrayList<>();
+        List<Rota> listaMelhorEntrega = new ArrayList<>();
+
+        for(RotasEntrega re : rotas)
+        {
+            Rota r = re.getRotaMenor();
+
+            if(r != null)
+            {
+                idaEvolta = r.getDistancia() * 2;
+
+                Rota rotaIdaEVolta = new Rota();
+                rotaIdaEVolta.setPontos(r.getPontos());
+                rotaIdaEVolta.setDestino(r.getDestino());
+                rotaIdaEVolta.setDistancia(idaEvolta);
+                rotaIdaEVolta.setRecompensa(r.getRecompensa());
+                listaMelhorEntrega.add(rotaIdaEVolta);
+            }
+        }
+
+        for(Rota r : listaMelhorEntrega)
+        {
+            somaIdaEVolta += r.getDistancia();
+
+            if(somaIdaEVolta <= distanciaTotal)
+            {
+                Rota re = new Rota();
+                re.setPontos(r.getPontos());
+                re.setRecompensa(r.getRecompensa());
+                re.setDistancia(r.getDistancia()/2);
+                re.setDestino(r.getDestino());
+                calculaMelhorEntrega.add(re);
+            }
+            somaIdaEVolta -= somaIdaEVolta;
+        }
+
+        return calculaMelhorEntrega;
     }
 
     /**
